@@ -1,0 +1,240 @@
+---
+title: "Untitled"
+format: html
+---
+
+```{python}
+#setup
+import pandas as pd
+import altair as alt
+import time
+import requests
+import lxml
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+from datetime import datetime
+
+import warnings 
+warnings.filterwarnings('ignore')
+alt.renderers.enable("png")
+```
+
+
+```{python}
+gender_3 =pd.read_csv('/Users/ahonaroy/Documents/GitHub/archive (2)/Employee_Salary_Dataset.csv')
+
+print(gender_3.head())
+```
+
+## Data cleaning
+```{python}
+#checking for na values
+gender_1.isnull().sum()
+
+```
+
+```{python}
+gender_3.isnull().sum()
+```
+
+
+```{python}
+gender_1 = gender_1[(gender_1['Age'] >= 18) & (gender_1['BasePay'] > 0) & (gender_1['PerfEval'] >= 1)]
+
+```
+
+
+```{python}
+gender_1.describe()
+```
+
+
+```{python}
+gender_1.info()
+```
+
+
+```{python}
+gender_1.drop_duplicates(inplace=True)
+
+```
+
+#Renaming columns
+```{python}
+gender_1.rename(columns={'JobTitle': 'Job_Title', 'BasePay': 'Base_Pay', 'PerfEval': 'Performance_Eval'}, inplace=True)
+
+```
+
+#Creating total compensation column
+```{python}
+gender_1['Total_Compensation'] = gender_1['Base_Pay'] + gender_1['Bonus']
+
+```
+
+#Sorting based on seniority level
+```{python}
+def experience_level(seniority):
+    if seniority <= 2:
+        return 'Junior'
+    elif seniority <= 4:
+        return 'Mid-Level'
+    else:
+        return 'Senior'
+
+gender_1['Experience_Level'] = gender_1['Seniority'].apply(experience_level)
+
+```
+
+#Clean up dataset gender_3
+```{python}
+#Drop duplicates
+gender_3 = gender_3.drop_duplicates()
+
+```
+
+
+```{python}
+#Filtering age as above or equal to 18, salary above 0(positive values) and experience years not above 18 
+gender_3 = gender_3[(gender_3['Age'] >= 18) & (gender_3['Age'] <= 65) & (gender_3['Salary'] > 0) & 
+            (gender_3['Experience_Years'] <= (gender_3['Age'] - 18))]
+
+```
+
+
+```{python}
+#Making sure to drop NA values
+gender_3 = gender_3.dropna() 
+
+```
+
+## Data visualization
+
+1.Bar Chart: Average Salary by Gender
+```{python}
+import altair as alt
+import pandas as pd
+import os
+
+# Aggregate average salary by gender
+salary_by_gender = gender_3.groupby('Gender', as_index=False)['Salary'].mean()
+
+# Create bar chart
+bar_chart = alt.Chart(salary_by_gender).mark_bar().encode(
+    x=alt.X('Gender', title='Gender'),
+    y=alt.Y('Salary', title='Average Salary', scale=alt.Scale(domain=[0, salary_by_gender['Salary'].max() + 5000])),
+    color=alt.Color('Gender', scale=alt.Scale(domain=['Male', 'Female'], range=['blue', 'pink']))
+).properties(
+    title='Average Salary by Gender',
+    width=400,
+    height=300
+)
+
+# Display the chart
+bar_chart
+```
+
+
+2.Scatter Plot: Experience vs. Salary
+```{python}
+import altair as alt
+import altair_viewer
+
+# Scatter plot of Experience_Years vs. Salary, color by Gender
+scatter_plot = alt.Chart(gender_3).mark_circle(size=100).encode(
+    x=alt.X('Experience_Years', title='Years of Experience'),
+    y=alt.Y('Salary', title='Salary'),
+    color=alt.Color('Gender', scale=alt.Scale(domain=['Male', 'Female'], range=['blue', 'pink'])),
+    tooltip=['Gender', 'Experience_Years', 'Salary']
+).properties(
+    title='Experience vs. Salary by Gender'
+)
+
+scatter_plot
+```
+
+
+3.Geopandas Map Visualization
+```{python}
+import geopandas as gpd
+import matplotlib.pyplot as plt
+
+# Example: Map of average salary by state
+gdf = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))  # Example GeoJSON
+state_data = pd.DataFrame({
+    'state': ['California', 'Texas', 'New York'],
+    'avg_salary': [100000, 75000, 85000]
+})
+state_gdf = gdf.merge(state_data, left_on='name', right_on='state', how='left')
+
+# Plot the map
+fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+state_gdf.plot(column='avg_salary', ax=ax, legend=True, cmap='coolwarm')
+plt.title('Average Salary by State')
+plt.show()
+
+```
+
+
+# Dataset 1 data visualization
+```{python}
+import pandas as pd
+
+#importing first dataset
+gender_1 = pd.read_csv('/Users/ahonaroy/Documents/GitHub/Glassdoor Gender Pay Gap.csv')
+
+print(gender_1.head())
+
+```
+
+# Heatmap
+```{python}
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Assuming gender_1 is already loaded
+# Select numerical columns for the heatmap
+numerical_cols = ['Age', 'BasePay', 'Bonus', 'PerfEval', 'Seniority']
+data = gender_1[numerical_cols]
+
+# Calculate the correlation matrix
+corr_matrix = data.corr()
+
+# Create the heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5)
+plt.title("Correlation Heatmap of Numerical Features")
+plt.show()
+
+```
+
+
+
+```{python}
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# Assuming 'gender_1' is already loaded as a DataFrame
+# Create a grouped DataFrame by Gender and Performance Evaluation
+perf_eval_gender = gender_1.groupby(['PerfEval', 'Gender']).size().unstack(fill_value=0)
+
+# Plot the stacked bar chart
+perf_eval_gender.plot(kind='bar', stacked=True, color=['pink', 'blue'])
+
+# Customize the plot
+plt.title("Performance Evaluation Scores by Gender")
+plt.xlabel("Performance Evaluation")
+plt.ylabel("Count")
+plt.xticks(rotation=0)
+plt.legend(title="Gender")
+plt.tight_layout()
+
+# Show the plot
+plt.show()
+
+```
+
+
+```{python}
+
+```
