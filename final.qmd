@@ -171,52 +171,74 @@ scatter_plot
 
 
 3.Geopandas Map Visualization
+
+```{python}
+gender_2 = pd.read_csv('/Users/ahonaroy/Documents/GitHub/archive (1)/PanelStudyIncomeDynamics.csv') 
+
+print(gender_2.head())
+
+```
+
+```{python}
+print(gender_2.columns)
+```
+
+```{python}
+print(gender_2['region'].unique())
+
+```
+
+```{python}
+region_mapping = {
+    1: "Northeast",
+    2: "Midwest",
+    3: "South",
+    4: "West"
+}
+
+# Map the region codes
+gender_2['region_name'] = gender_2['region'].map(region_mapping)
+
+```
+
+```{python}
+regional_data = gender_2.groupby('region_name').agg({'farminc': 'mean'}).reset_index()
+regional_data.rename(columns={'farminc': 'avg_income'}, inplace=True)
+
+```
+
 ```{python}
 import geopandas as gpd
+
+# Example: Load US states and map them to regions
+us_states = gpd.read_file('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
+
+# Map state names to regions
+state_to_region = {
+    'Maine': 'Northeast',
+    'New York': 'Northeast',
+    # Add other mappings here...
+}
+
+us_states['region_name'] = us_states['name'].map(state_to_region)
+
+```
+
+```{python}
+merged = us_states.merge(regional_data, on='region_name', how='left')
+
+```
+
+```{python}
 import matplotlib.pyplot as plt
 
-# Example: Map of average salary by state
-gdf = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))  # Example GeoJSON
-state_data = pd.DataFrame({
-    'state': ['California', 'Texas', 'New York'],
-    'avg_salary': [100000, 75000, 85000]
-})
-state_gdf = gdf.merge(state_data, left_on='name', right_on='state', how='left')
-
-# Plot the map
 fig, ax = plt.subplots(1, 1, figsize=(10, 8))
-state_gdf.plot(column='avg_salary', ax=ax, legend=True, cmap='coolwarm')
-plt.title('Average Salary by State')
+merged.plot(column='avg_income', ax=ax, legend=True, cmap='coolwarm')
+plt.title('Average Income by Region')
 plt.show()
 
 ```
 
-```{python}
-import pandas as pd
-import geopandas as gpd
-import matplotlib.pyplot as plt
-
-# Step 1: Aggregate average salary by state from your dataset
-# Replace 'State' and 'Salary' with the actual column names in your dataset
-state_salary_data = gender_3.groupby('State')['Salary'].mean().reset_index()
-state_salary_data.rename(columns={'Salary': 'avg_salary'}, inplace=True)
-
-# Step 2: Load a GeoDataFrame of US states
-# Using naturalearth_lowres as a general example; replace with a US-specific GeoJSON if needed
-gdf = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-us_states_gdf = gdf[gdf['iso_a2'] == 'US']  # Filter only the United States
-
-# Step 3: Merge GeoDataFrame with your salary data
-us_salary_gdf = us_states_gdf.merge(state_salary_data, left_on='name', right_on='State', how='left')
-
-# Step 4: Plot the map
-fig, ax = plt.subplots(1, 1, figsize=(12, 8))
-us_salary_gdf.plot(column='avg_salary', ax=ax, legend=True, cmap='coolwarm', 
-                   missing_kwds={"color": "lightgrey", "label": "No data"})  # Handle missing data
-plt.title('Average Salary by State')
-plt.show()
-
-```
 
 ```{python}
 gender_2 = pd.read_csv('/Users/ahonaroy/Documents/GitHub/archive (1)/PanelStudyIncomeDynamics.csv') 
@@ -291,17 +313,6 @@ print(merged.head())
 print(merged[['region_name', 'avg_income']].dropna())
 
 ```
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -395,7 +406,7 @@ from nltk.stem import WordNetLemmatizer
 # Example job description
 job_desc = "We are looking for a dynamic leader to manage our sales team."
 
-# Download necessary NLTK resources (if you haven't already)
+# Download necessary NLTK resources
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
@@ -447,7 +458,7 @@ nltk.download('stopwords')
 nltk.download('wordnet')
 
 # Load the gender_4 dataset
-gender_4 = pd.read_csv("/Users/ahonaroy/Documents/GitHub/final_project/job_title_des.csv")
+gender_4 = pd.read_csv("/Users/ahonaroy/Documents/GitHub/final_project/data/job_title_des 2.csv")
 
 # Ensure we are working only with the 'Job Description' column
 job_descriptions = gender_4['Job Description']  # Note the space in the column name
@@ -526,29 +537,6 @@ plt.show()
 
 From our graph, we can see that there are more female words than men. 
 
-
-```{python}
-# Group by Job Title to see if certain job titles have more male or female words
-job_title_grouped = gender_bias_df.groupby('Job Title').agg({'male_words': 'sum', 'female_words': 'sum'}).reset_index()
-
-# Display the result to see the job titles and the corresponding male/female word counts
-print(job_title_grouped)
-
-# Optionally, plot the results to visualize the differences
-import matplotlib.pyplot as plt
-job_title_grouped.set_index('Job Title')[['male_words', 'female_words']].plot(kind='bar', figsize=(14, 7))
-plt.title('Male vs Female Words in Job Titles')
-plt.ylabel('Count of Gendered Words')
-plt.xticks(rotation=90)  # Rotate job titles for better readability
-plt.show()
-
-```
-
-
-```{python}
-print(gender_4.columns)
-```
-
 ## main graph
 ```{python}
 import pandas as pd
@@ -556,13 +544,12 @@ import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 
-# Assuming you've already loaded your dataset (gender_4.csv)
-df = pd.read_csv('/Users/ahonaroy/Documents/GitHub/final_project/job_title_des.csv')
+df = pd.read_csv('/Users/ahonaroy/Documents/GitHub/final_project/data/job_title_des 2.csv')
 
 # Remove 'Unnamed: 0' column if it is just an index
 df = df.drop(columns=['Unnamed: 0'])
 
-# Define gendered words (you can expand these lists)
+# Define gendered words
 gendered_words = {
     'male': ['he', 'man', 'male', 'his', 'brother', 'father'],
     'female': ['she', 'woman', 'female', 'her', 'sister', 'mother']
@@ -584,12 +571,12 @@ job_title_grouped = df.groupby('Job Title').agg({'male_words': 'sum', 'female_wo
 # Print the result to see which job titles have more male or female words
 print(job_title_grouped)
 
-# Optionally, plot the results to visualize the differences
+# Plot the results to visualize the differences
 import matplotlib.pyplot as plt
 job_title_grouped.set_index('Job Title')[['male_words', 'female_words']].plot(kind='bar', figsize=(14, 7))
 plt.title('Male vs Female Words by Job Title')
 plt.ylabel('Count of Gendered Words')
-plt.xticks(rotation=90)  # Rotate job titles for better readability
+plt.xticks(rotation=90)  
 plt.show()
 
 ```
