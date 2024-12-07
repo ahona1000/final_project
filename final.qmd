@@ -43,6 +43,16 @@ print(gender_1.head())
 ```
 
 
+
+
+## Testing
+```{python, echo=False}
+print("Hello, World!")
+```
+## Delete this
+
+
+
 ## Data cleaning
 ```{python}
 #checking for na values
@@ -172,12 +182,14 @@ scatter_plot
 
 3.Geopandas Map Visualization
 
-```{python}
+```{python, echo=False}
 gender_2 = pd.read_csv('/Users/ahonaroy/Documents/GitHub/archive (1)/PanelStudyIncomeDynamics.csv') 
 
 print(gender_2.head())
 
 ```
+
+
 
 ```{python}
 print(gender_2.columns)
@@ -379,7 +391,8 @@ plt.show()
 ## Extra Credit 
 
 
-```{python}
+```{python, echo=False}
+# Asked chatGPT to help me with basic level natural language processing
 import nltk
 from nltk.tokenize import word_tokenize
 
@@ -397,7 +410,9 @@ print(tokens)
 ```
 
 #1. 
-```{python}
+```{python, echo=False}
+
+# I asked ChatGPT to help me with Natural language processing basic to finding out gendered male or female words. I then created a function and applied it. 
 import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
@@ -445,7 +460,9 @@ print("Female words:", female_words)
 
 
 #2. 
-```{python}
+```{python, echo=False}
+
+# I asked ChatGPT how I can use NLP to  detect gender bias in words, so I applied it to job descriptions from a new dataset.
 import pandas as pd
 import nltk
 from nltk.tokenize import word_tokenize
@@ -539,6 +556,8 @@ From our graph, we can see that there are more female words than men.
 
 ## main graph
 ```{python}
+# I asked chatGPT how I can use natural language processing to compile male vs female words by job title
+
 import pandas as pd
 import nltk
 from nltk.tokenize import word_tokenize
