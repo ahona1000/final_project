@@ -1,6 +1,11 @@
 ---
-title: "Untitled"
-format: html
+title: "Final Project"
+author: "Ahona Roy" 
+date: "December 1"
+format: pdf
+execute:
+  eval: true
+  echo: false
 ---
 
 ```{python}
@@ -186,6 +191,119 @@ plt.show()
 
 ```
 
+```{python}
+import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
+
+# Step 1: Aggregate average salary by state from your dataset
+# Replace 'State' and 'Salary' with the actual column names in your dataset
+state_salary_data = gender_3.groupby('State')['Salary'].mean().reset_index()
+state_salary_data.rename(columns={'Salary': 'avg_salary'}, inplace=True)
+
+# Step 2: Load a GeoDataFrame of US states
+# Using naturalearth_lowres as a general example; replace with a US-specific GeoJSON if needed
+gdf = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+us_states_gdf = gdf[gdf['iso_a2'] == 'US']  # Filter only the United States
+
+# Step 3: Merge GeoDataFrame with your salary data
+us_salary_gdf = us_states_gdf.merge(state_salary_data, left_on='name', right_on='State', how='left')
+
+# Step 4: Plot the map
+fig, ax = plt.subplots(1, 1, figsize=(12, 8))
+us_salary_gdf.plot(column='avg_salary', ax=ax, legend=True, cmap='coolwarm', 
+                   missing_kwds={"color": "lightgrey", "label": "No data"})  # Handle missing data
+plt.title('Average Salary by State')
+plt.show()
+
+```
+
+```{python}
+gender_2 = pd.read_csv('/Users/ahonaroy/Documents/GitHub/archive (1)/PanelStudyIncomeDynamics.csv') 
+
+print(gender_2.head())
+
+```
+
+```{python}
+print(gender_2.columns)
+```
+
+```{python}
+print(gender_2['region'].unique())
+
+```
+
+```{python}
+region_mapping = {
+    1: "Northeast",
+    2: "Midwest",
+    3: "South",
+    4: "West"
+}
+
+# Map the region codes
+gender_2['region_name'] = gender_2['region'].map(region_mapping)
+
+```
+
+```{python}
+regional_data = gender_2.groupby('region_name').agg({'farminc': 'mean'}).reset_index()
+regional_data.rename(columns={'farminc': 'avg_income'}, inplace=True)
+
+```
+
+```{python}
+import geopandas as gpd
+
+# Example: Load US states and map them to regions
+us_states = gpd.read_file('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
+
+# Map state names to regions
+state_to_region = {
+    'Maine': 'Northeast',
+    'New York': 'Northeast',
+    # Add other mappings here...
+}
+
+us_states['region_name'] = us_states['name'].map(state_to_region)
+
+```
+
+```{python}
+merged = us_states.merge(regional_data, on='region_name', how='left')
+
+```
+
+```{python}
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+merged.plot(column='avg_income', ax=ax, legend=True, cmap='coolwarm')
+plt.title('Average Income by Region')
+plt.show()
+
+```
+
+
+```{python}
+print(merged.head())
+print(merged[['region_name', 'avg_income']].dropna())
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Dataset 1 data visualization
 ```{python}
@@ -247,6 +365,271 @@ plt.show()
 ```
 
 
+## Extra Credit 
+
+
 ```{python}
+import nltk
+from nltk.tokenize import word_tokenize
+
+# Download punkt tokenizer models
+nltk.download('punkt')
+
+# Example job description
+job_desc = "We are looking for a dynamic leader to manage our sales team."
+
+# Tokenization
+tokens = word_tokenize(job_desc.lower())  # Lowercased
+
+print(tokens)
 
 ```
+
+#1. 
+```{python}
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+
+# Example job description
+job_desc = "We are looking for a dynamic leader to manage our sales team."
+
+# Download necessary NLTK resources (if you haven't already)
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+# Tokenization
+tokens = word_tokenize(job_desc.lower())  # Lowercased
+
+# Remove stopwords
+stop_words = set(stopwords.words("english"))
+tokens = [word for word in tokens if word not in stop_words]
+
+# Lemmatization
+lemmatizer = WordNetLemmatizer()
+lemmatized_tokens = [lemmatizer.lemmatize(word) for word in tokens]
+
+# Gendered words example (custom lists)
+gendered_words = {
+    "male": ["man", "he", "his", "him", "male", "boy"],
+    "female": ["woman", "she", "her", "female", "girl"]
+}
+
+# Detect gender bias function
+def detect_gender_bias(tokens):
+    male_words = [word for word in tokens if word in gendered_words["male"]]
+    female_words = [word for word in tokens if word in gendered_words["female"]]
+    return male_words, female_words
+
+# Apply function to lemmatized tokens
+male_words, female_words = detect_gender_bias(lemmatized_tokens)
+
+# Output results
+print("Male words:", male_words)
+print("Female words:", female_words)
+
+```
+
+
+#2. 
+```{python}
+import pandas as pd
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+
+# Download required NLTK resources if not already done
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+# Load the gender_4 dataset
+gender_4 = pd.read_csv("/Users/ahonaroy/Documents/GitHub/final_project/job_title_des.csv")
+
+# Ensure we are working only with the 'Job Description' column
+job_descriptions = gender_4['Job Description']  # Note the space in the column name
+
+# Define expanded gendered words for detecting bias
+gendered_words = {
+    "male": ["he", "him", "his", "man", "men", "masculine", "male", "strong", "competitive", "dominant", "leader", "chief", "executive", "boss"],
+    "female": ["she", "her", "hers", "woman", "women", "feminine", "female", "nurturing", "supportive", "collaborative", "assistant", "helper", "coordinator"]
+}
+
+# Tokenization and preprocessing
+def process_job_description(description):
+    # Tokenize the description
+    tokens = word_tokenize(description.lower())  # Lowercased
+    print(tokens)  # Print tokens to check tokenization
+    
+    # Remove stopwords
+    stop_words = set(stopwords.words("english"))
+    filtered_tokens = [word for word in tokens if word not in stop_words]
+    
+    # Lemmatize tokens
+    lemmatizer = WordNetLemmatizer()
+    lemmatized_tokens = [lemmatizer.lemmatize(word) for word in filtered_tokens]
+    
+    return lemmatized_tokens
+
+# Detect gender bias in the job description
+def detect_gender_bias(tokens):
+    male_words = [word for word in tokens if word in gendered_words["male"]]
+    female_words = [word for word in tokens if word in gendered_words["female"]]
+    return male_words, female_words
+
+# Apply the processing to each job description in the dataset
+gender_bias_results = []
+for description in job_descriptions:
+    tokens = process_job_description(description)
+    male_words, female_words = detect_gender_bias(tokens)
+    gender_bias_results.append({
+        "description": description,
+        "male_words": male_words,
+        "female_words": female_words
+    })
+
+# Convert results to a DataFrame for easier viewing
+gender_bias_df = pd.DataFrame(gender_bias_results)
+
+# Display the results
+print(gender_bias_df)
+
+```
+
+
+```{python}
+print(gender_bias_df.head())
+
+```
+
+#graphing it
+```{python}
+import matplotlib.pyplot as plt
+
+# Calculate the total count of male and female words across all descriptions
+male_counts = gender_bias_df['male_words'].apply(len)
+female_counts = gender_bias_df['female_words'].apply(len)
+
+# Plotting
+plt.figure(figsize=(10, 6))
+plt.hist([male_counts, female_counts], bins=20, label=['Male Words', 'Female Words'], color=['blue', 'pink'])
+plt.title('Distribution of Gendered Words in Job Descriptions')
+plt.xlabel('Word Count')
+plt.ylabel('Frequency')
+plt.legend()
+plt.show()
+
+```
+
+From our graph, we can see that there are more female words than men. 
+
+
+```{python}
+# Group by Job Title to see if certain job titles have more male or female words
+job_title_grouped = gender_bias_df.groupby('Job Title').agg({'male_words': 'sum', 'female_words': 'sum'}).reset_index()
+
+# Display the result to see the job titles and the corresponding male/female word counts
+print(job_title_grouped)
+
+# Optionally, plot the results to visualize the differences
+import matplotlib.pyplot as plt
+job_title_grouped.set_index('Job Title')[['male_words', 'female_words']].plot(kind='bar', figsize=(14, 7))
+plt.title('Male vs Female Words in Job Titles')
+plt.ylabel('Count of Gendered Words')
+plt.xticks(rotation=90)  # Rotate job titles for better readability
+plt.show()
+
+```
+
+
+```{python}
+print(gender_4.columns)
+```
+
+## main graph
+```{python}
+import pandas as pd
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+
+# Assuming you've already loaded your dataset (gender_4.csv)
+df = pd.read_csv('/Users/ahonaroy/Documents/GitHub/final_project/job_title_des.csv')
+
+# Remove 'Unnamed: 0' column if it is just an index
+df = df.drop(columns=['Unnamed: 0'])
+
+# Define gendered words (you can expand these lists)
+gendered_words = {
+    'male': ['he', 'man', 'male', 'his', 'brother', 'father'],
+    'female': ['she', 'woman', 'female', 'her', 'sister', 'mother']
+}
+
+# Tokenize and filter gendered words in job descriptions
+def detect_gender_bias(job_desc):
+    tokens = word_tokenize(job_desc.lower())  # Tokenize and convert to lowercase
+    male_words = [word for word in tokens if word in gendered_words["male"]]
+    female_words = [word for word in tokens if word in gendered_words["female"]]
+    return len(male_words), len(female_words)
+
+# Apply the function to the 'Job Description' column
+df['male_words'], df['female_words'] = zip(*df['Job Description'].apply(detect_gender_bias))
+
+# Now, group by 'Job Title' and calculate the sum of male and female words for each title
+job_title_grouped = df.groupby('Job Title').agg({'male_words': 'sum', 'female_words': 'sum'}).reset_index()
+
+# Print the result to see which job titles have more male or female words
+print(job_title_grouped)
+
+# Optionally, plot the results to visualize the differences
+import matplotlib.pyplot as plt
+job_title_grouped.set_index('Job Title')[['male_words', 'female_words']].plot(kind='bar', figsize=(14, 7))
+plt.title('Male vs Female Words by Job Title')
+plt.ylabel('Count of Gendered Words')
+plt.xticks(rotation=90)  # Rotate job titles for better readability
+plt.show()
+
+```
+
+From the output, it looks like some job titles have more male-associated words (e.g., Backend Developer and Network Administrator), while others have more female-associated words (e.g., Database Administrator). This gives us a sense of the gendered language in job descriptions and how it might reflect gender biases.
+
+## Writeup
+
+## Introduction
+
+The presence of gendered language in job descriptions has been a subject of concern due to its potential impact on workforce diversity. This project investigates the prevalence of gendered language in job descriptions and its implications for diversity in hiring. The goal is to assess how gendered language may influence job applications and whether such language can discourage diverse applicants from applying.
+
+## Methodology
+
+### Data Collection
+
+The dataset used in this analysis contains job descriptions from various roles across multiple industries. The primary columns of interest are "Job Title" and "Job Description", which provide insight into the language used in the descriptions.
+
+### NLP- Extra credit portion
+
+I utilized Natural Language Processing (NLP) methods, such as tokenization, stopword removal, and lemmatization, to analyze the language in the job descriptions. Gendered words were identified using predefined lists of male- and female-associated terms.
+
+### Data Analysis
+
+The data was processed to identify patterns in the usage of gendered language across different job titles. I also visualized the distribution of gendered language across various roles.
+
+## Results and Discussion
+
+### Findings
+
+My analysis revealed that certain job titles, particularly those in technology fields (e.g., "Backend Developer", "DevOps Engineer"), showed a higher frequency of male-associated words. This suggests a potential bias in the language that may influence the diversity of applicants.
+
+### Interpretation
+
+The prevalence of gendered language may discourage women from applying for certain roles, especially in male-dominated industries. This highlights the need for companies to consider adopting more gender-neutral language to create a more inclusive environment.
+
+## Conclusion
+
+This project demonstrates that gendered language is prevalent in job descriptions, particularly in male-dominated fields. To promote diversity and inclusion, organizations should consider using gender-neutral language in their job postings. Future work could expand this analysis to more job titles or apply machine learning techniques for automated analysis.
+
+## Notes
+
+The dynamic plot I created in shiny is not representative of the salaries women and men get and does not display the gender parity. Women seem to have a higher salary because of the small number of female employees with higher salaries compared to the male employees. This does not necessarily indicate a systemic trend but is simply a result of the small sample size and salary distribution in the dataset.
